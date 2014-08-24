@@ -10,4 +10,4 @@ To install, copy the files to your Statamic site and ensure your tasks are [conf
 
 Only today's bookmarks are checked and pulled (if appropriately tagged) and the add-on only pulls bookmarks since you last ran the check.
 
-If you want to manually pull from Pinboard (get older bookmarks), run 'http://<your-statamic-site>/TRIGGER/pinboard/get?from='date/time-to-pull-from'
+If you want to manually pull from Pinboard (get older bookmarks), run 'http://your-statamic-site/TRIGGER/pinboard/get?from='date/time-to-pull-from'
