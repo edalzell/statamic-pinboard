@@ -65,7 +65,7 @@ class Tasks_pinboard extends Tasks
 			$slug = Slug::make($bookmark->title, array('lowercase' => true));
 
 			// TODO: check the _entry_timestamps config to determine how to name the file
-			$prefix = date('Y-m-d-', $bookmark->timestamp);
+			$prefix = date('Y-m-d-Hi', $bookmark->timestamp);
 
 			// make the file name
 			$filename = $prefix . $slug;
