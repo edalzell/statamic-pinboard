@@ -52,7 +52,7 @@ class PinboardAPI
         $this->_token = $token;
         $this->_connection_timeout = $connection_timeout;
         $this->_request_timeout = $request_timeout;
-        $this->_instance_hash = substr(md5($user . ':' . $pass), 0, 8);
+        $this->_instance_hash = substr(md5($token), 0, 8);
         self::$_instance_hashes[$this->_instance_hash] = $this;
     }
     

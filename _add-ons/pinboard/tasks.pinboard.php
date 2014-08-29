@@ -26,7 +26,7 @@ class Tasks_pinboard extends Tasks
 
     private function getBookmarks($from) {
         //get the token from the config
-        $token = $this->fetchConfig('token');
+        $token = $this->fetchConfig('token', null, null, false, false);
 
         // get the tag used for the links
         $tag = $this->fetchConfig('link_tag', 'lb');
@@ -68,10 +68,20 @@ class Tasks_pinboard extends Tasks
             $prefix = date('Y-m-d-Hi', $bookmark->timestamp);
 
             // make the file name
-            $filename = $prefix . $slug;
+            $filename = $prefix.'-'.$slug;
 
             $fullpath = $this->getFullPath($page_path, $filename);
         
+        	// if the twitter_embed add-on is installed and the bookmark is atwitter link
+        	if ($this->addon->isInstalled('twitter_embed') && strpos($bookmark->url, "https://twitter.com") === 0) {
+				// get the id
+				$url_array = explode('/', $bookmark->url);
+				$id = $url_array[count($url_array)-1];
+			
+				// prepend {{ twitter_embed:tweet id="<id>" omit_script="true"}}\n to the description
+				$bookmark->description = '{{ twitter_embed:tweet id="'.$id.'" omit_script="true"}}'.PHP_EOL.PHP_EOL.$bookmark->description;
+			}
+			
             $yaml = array(
                 'title' => $bookmark->title,
                 'tags' => array_diff($bookmark->tags, array($tag)),
