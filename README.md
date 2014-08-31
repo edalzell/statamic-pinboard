@@ -14,6 +14,7 @@ A Statamic add-on for Pinboard that creates entries from specific, public bookma
   * link_tag: which tag to check for on Pinboard. Defaults to 'lb';
   * link_page: which folder to put the content in. Defaults to 'blog'. Entries use the date type.
 4. Set up Statamic so tasks are [run]((http://learn.statamic.com/learn/creating-add-ons/tasks))
+5. If you want to pull Tweets from your Pinboard, install the [statamic-twitter add-on](https://github.com/edalzell/statamic-twitter)
 5. Enjoy! :)
 
 ## Usage
