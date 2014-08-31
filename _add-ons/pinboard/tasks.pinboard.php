@@ -21,6 +21,7 @@ class Tasks_pinboard extends Tasks
     public function writeRecentLinks($from = null)
     {
         $this->writeBookmarks($this->getBookmarks($from));
+        return true;
     }    
 
 
@@ -38,7 +39,7 @@ class Tasks_pinboard extends Tasks
         $timestamp = $from ?: $this->cache->get('last-check');
         $bookmarks = null;
         
-        $pinboard = new PinboardAPI($token);
+        $pinboard = new PinboardAPI(null, $token);
         
         if ($timestamp == null) {
             $bookmarks = $pinboard->get(null, $tag);
@@ -73,13 +74,14 @@ class Tasks_pinboard extends Tasks
             $fullpath = $this->getFullPath($page_path, $filename);
         
         	// if the twitter_embed add-on is installed and the bookmark is atwitter link
-        	if ($this->addon->isInstalled('twitter_embed') && strpos($bookmark->url, "https://twitter.com") === 0) {
+        	if ($this->addon->hasAPI('twitter') && strpos($bookmark->url, "https://twitter.com") === 0) {
 				// get the id
 				$url_array = explode('/', $bookmark->url);
 				$id = $url_array[count($url_array)-1];
 			
+				$tweet = $this->addon->api('twitter')->getTweet($id);
 				// prepend {{ twitter_embed:tweet id="<id>" omit_script="true"}}\n to the description
-				$bookmark->description = '{{ twitter_embed:tweet id="'.$id.'" omit_script="true"}}'.PHP_EOL.PHP_EOL.$bookmark->description;
+				$bookmark->description = '> '.$tweet['text'].PHP_EOL.PHP_EOL.$bookmark->description;
 			}
 			
             $yaml = array(

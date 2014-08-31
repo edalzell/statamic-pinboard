@@ -4,7 +4,7 @@
  * Pinboard API Client in PHP
  * 
  * URL: http://github.com/kijin/pinboard-api
- * Version: 0.1.3
+ * Version: 0.2.1
  * 
  * Copyright (c) 2012-2013, Kijin Sung <kijin@kijinsung.com>
  * 
@@ -32,13 +32,15 @@ class PinboardAPI
     // Settings are stored here.
     
     const API_BASE_URL = 'https://api.pinboard.in/v1/';
+    const API_CLIENT_VERSION = "0.2.1";
     const ALLOWED_URL_SCHEMES_REGEX = '/^(?:https?|javascript|mailto|ftp|file):/i';
     const RECENT_COUNT_MAX = 100;
-    const USER_AGENT = 'Mozilla/5.0 (Pinboard API Client for PHP; http://github.com/kijin/pinboard-api)';
+    const USER_AGENT = 'Mozilla/5.0 (Pinboard API Client %s for PHP; http://github.com/kijin/pinboard-api)';
     
     public static $_instance_hashes = array();
     protected $_instance_hash;
-    protected $_token;
+    protected $_user;
+    protected $_pass;
     protected $_curl_handle;
     protected $_connection_timeout;
     protected $_request_timeout;
@@ -47,12 +49,13 @@ class PinboardAPI
     
     // Constructor.
     
-    public function __construct($token, $connection_timeout = 10, $request_timeout = 30)
+    public function __construct($user, $pass, $connection_timeout = 10, $request_timeout = 30)
     {
-        $this->_token = $token;
+        $this->_user = $user;
+        $this->_pass = $pass;
         $this->_connection_timeout = $connection_timeout;
         $this->_request_timeout = $request_timeout;
-        $this->_instance_hash = substr(md5($token), 0, 8);
+        $this->_instance_hash = substr(md5($user . ':' . $pass), 0, 8);
         self::$_instance_hashes[$this->_instance_hash] = $this;
     }
     
@@ -280,11 +283,37 @@ class PinboardAPI
         return $this->_xml_to_status($xml);
     }
     
+    // Get the list of notes.
+    
+    public function list_notes()
+    {
+        $xml = $this->_remote('notes/list');
+        return $this->_xml_to_note($xml);
+    }
+    
+    // Get a single note.
+    
+    public function get_note($id)
+    {
+        if (!preg_match('/^[0-9a-f]{20}$/', $id)) return false;
+        $xml = $this->_remote('notes/' . $id);
+        $note = $this->_xml_to_note($xml);
+        return count($note) ? current($note) : false;
+    }
+    
     // Get the user's secret RSS token.
     
     public function get_rss_token()
     {
         $xml = $this->_remote('user/secret');
+        return (string)$xml;
+    }
+    
+    // Get the user's API token.
+    
+    public function get_api_token()
+    {
+        $xml = $this->_remote('user/api_token');
         return (string)$xml;
     }
     
@@ -306,9 +335,18 @@ class PinboardAPI
     
     protected function _remote($method, $args = array(), $return_xml = true)
     {
+        if ($this->_user === null || preg_match('/^' . preg_quote($this->_user, '/') . ':[0-9A-F]{20}$/', $this->_pass))
+        {
+            $args['auth_token'] = $this->_pass;
+            $use_http_auth = false;
+        }
+        else
+        {
+            $use_http_auth = true;
+        }
+        
         if (is_array($args) && count($args))
         {
-        	$args['auth_token'] = $this->_token;
             $querystring = '?' . http_build_query($args);
         }
         else
@@ -329,13 +367,17 @@ class PinboardAPI
             curl_setopt_array($this->_curl_handle, array(
                 CURLOPT_CONNECTTIMEOUT => $this->_connection_timeout,
                 CURLOPT_TIMEOUT => $this->_request_timeout,
-                CURLOPT_USERAGENT => self::USER_AGENT,
+                CURLOPT_USERAGENT => sprintf(self::USER_AGENT, self::API_CLIENT_VERSION),
                 CURLOPT_ENCODING => '',
                 CURLOPT_RETURNTRANSFER => 1,
                 CURLOPT_FOLLOWLOCATION => 1,
                 CURLOPT_MAXREDIRS => 1,
-                CURLOPT_HTTPAUTH => CURLAUTH_ANY,
             ));
+            if ($use_http_auth)
+            {
+                curl_setopt($this->_curl_handle, CURLOPT_HTTPAUTH, CURLAUTH_ANY);
+                curl_setopt($this->_curl_handle, CURLOPT_USERPWD, $this->_user . ':' . $this->_pass);
+            }
         }
         
         curl_setopt($this->_curl_handle, CURLOPT_URL, $url);
@@ -345,7 +387,10 @@ class PinboardAPI
         switch ($status)
         {
             case 200: break;
-            case 429: throw new PinboardException_TooManyRequests('Too many requests');
+            case 401:
+                throw new PinboardException_AuthenticationFailure('Authentication failure (using ' . ($use_http_auth ? 'password' : 'token'));
+            case 429:
+                throw new PinboardException_TooManyRequests('Too many requests');
             default:
                 if ($status > 0) throw new PinboardException_InvalidResponse('Server responded with HTTP status code ' . $status);
                 if (curl_errno($this->_curl_handle)) throw new PinboardException_ConnectionError(curl_error($this->_curl_handle));
@@ -435,6 +480,29 @@ class PinboardAPI
             }
             
             $ret[] = $bookmark;
+        }
+        
+        return $ret;
+    }
+    
+    // This method builds a PinboardNote object from an XML element.
+    
+    protected function _xml_to_note($xml)
+    {
+        $ret = array();
+        
+        $entries = $xml->getName() === 'notes' ? $xml->note : array($xml);
+        foreach ($entries as $entry)
+        {
+            $note = new PinboardNote;
+            $note->id = (string)$entry['id'];
+            if (isset($entry->title)) $note->title = (string)$entry->title;
+            if (isset($entry->hash)) $note->hash = (string)$entry->hash;
+            if (isset($entry->created_at)) $note->created_at = (string)$entry->created_at;
+            if (isset($entry->updated_at)) $note->updated_at = (string)$entry->updated_at;
+            if (isset($entry->length)) $note->length = (string)$entry->length;
+            if (isset($entry->text)) $note->text = (string)$entry->text;
+            $ret[] = $note;
         }
         
         return $ret;
@@ -554,9 +622,23 @@ class PinboardTag
     }
 }
 
+// Note class, used for handling individual notes.
+
+class PinboardNote
+{
+    public $id;
+    public $title;
+    public $hash;
+    public $created_at;
+    public $updated_at;
+    public $length;
+    public $text;
+}
+
 // Exceptions.
 
 class PinboardException extends Exception { }
 class PinboardException_ConnectionError extends PinboardException { }
+class PinboardException_AuthenticationFailure extends PinboardException { }
 class PinboardException_TooManyRequests extends PinboardException { }
 class PinboardException_InvalidResponse extends PinboardException { }
