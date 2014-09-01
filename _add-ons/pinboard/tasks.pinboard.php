@@ -1,6 +1,6 @@
 <?php 
 
-require_once 'vendor/pinboard-api/pinboard-api.php';
+require_once 'vendor/autoload.php';
 
 class Tasks_pinboard extends Tasks
 {

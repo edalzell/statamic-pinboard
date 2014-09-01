@@ -1,0 +1,49 @@
+[
+    {
+        "name": "kijin/pinboard-api",
+        "version": "0.2.1",
+        "version_normalized": "0.2.1.0",
+        "source": {
+            "type": "git",
+            "url": "https://github.com/kijin/pinboard-api.git",
+            "reference": "06825259e494893673808a3679c03a4d240f709d"
+        },
+        "dist": {
+            "type": "zip",
+            "url": "https://api.github.com/repos/kijin/pinboard-api/zipball/06825259e494893673808a3679c03a4d240f709d",
+            "reference": "06825259e494893673808a3679c03a4d240f709d",
+            "shasum": ""
+        },
+        "require": {
+            "ext-curl": "*",
+            "ext-simplexml": "*",
+            "php": ">=5.0.0"
+        },
+        "time": "2014-08-30 02:56:34",
+        "type": "library",
+        "installation-source": "dist",
+        "autoload": {
+            "files": [
+                "pinboard-api.php"
+            ]
+        },
+        "notification-url": "https://packagist.org/downloads/",
+        "license": [
+            "MIT"
+        ],
+        "authors": [
+            {
+                "name": "Kijin Sung",
+                "email": "kijin@kijinsung.com",
+                "homepage": "http://www.kijinsung.com/",
+                "role": "Developer"
+            }
+        ],
+        "description": "Pinboard API Client in PHP",
+        "homepage": "https://github.com/kijin/pinboard-api",
+        "keywords": [
+            "bookmark",
+            "pinboard"
+        ]
+    }
+]
