@@ -93,6 +93,10 @@ class Tasks_pinboard extends Tasks
                 'date' => date("Y-m-d H:i", $bookmark->timestamp));
 
             File::put($fullpath, File::buildContent($yaml, $bookmark->description));
+            
+            if ($this->addon->hasAPI('relative_cache_buster')) {
+            	$this->addon->api('relative_cache_buster')->bustCache($fullpath);
+            }
         }
     }
 
