@@ -18,14 +18,14 @@ class Tasks_pinboard extends Tasks
         $this->add($refresh, 'writeRecentLinks');
     }
 
-    public function writeRecentLinks($from = null)
+    public function writeRecentLinks($from = null, $url = null)
     {
-        $this->writeBookmarks($this->getBookmarks($from));
+        $this->writeBookmarks($this->getBookmarks($from, $url));
         return true;
     }    
 
 
-    private function getBookmarks($from) {
+    private function getBookmarks($from, $url) {
         //get the token from the config
         $token = $this->fetchConfig('token', null, null, false, false);
 
@@ -36,16 +36,11 @@ class Tasks_pinboard extends Tasks
             check last time this was run.
             if never run, just grab todays 
         */
-        $timestamp = $from ?: $this->cache->get('last-check');
-        $bookmarks = null;
+        $timestamp = $from ?: (int)$this->cache->get('last-check');
         
         $pinboard = new PinboardAPI(null, $token);
         
-        if ($timestamp == null) {
-            $bookmarks = $pinboard->get(null, $tag);
-        } else {
-            $bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
-        }
+        $bookmarks = $pinboard->get($url, $tag, $timestamp);
         
         // when done, store the last timestamp so we don't re fectch old ones
         $this->cache->put('last-check', time());
@@ -66,7 +61,7 @@ class Tasks_pinboard extends Tasks
             $slug = Slug::make($bookmark->title, array('lowercase' => true));
 
             // TODO: check the _entry_timestamps config to determine how to name the file
-            $prefix = date('Y-m-d-Hi', $bookmark->timestamp);
+            $prefix = date('Y-m-d-Hi');
 
             // make the file name
             $filename = $prefix.'-'.$slug;
