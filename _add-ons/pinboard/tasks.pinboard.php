@@ -41,7 +41,6 @@ class Tasks_pinboard extends Tasks
         $pinboard = new PinboardAPI(null, $token);
         
         $bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
-//        $bookmarks = $pinboard->get($url, $tag, $timestamp);
         
         // when done, store the last timestamp so we don't fetch ones we've already retrieved
         $this->cache->put('last-check', time());
@@ -102,7 +101,7 @@ class Tasks_pinboard extends Tasks
     						  $this->fetchConfig('author'),
     						  array('links'),
     						  array_diff($bookmark->tags, array($tag)),
-    						  null,
+    						  $bookmark->timestamp,
     						  $this->fetchConfig('link_page', 'links'));
 		}
     }

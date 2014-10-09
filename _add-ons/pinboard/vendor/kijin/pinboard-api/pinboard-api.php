@@ -479,7 +479,7 @@ class PinboardAPI
     {
         $ret = array();
         
-        $entries = $json->getName() === 'notes' ? $json->note : array($json);
+        $entries = $json->notes;
         foreach ($entries as $entry)
         {
             $note = new PinboardNote;
@@ -500,7 +500,7 @@ class PinboardAPI
     
     protected function _json_to_status($json)
     {
-        $status = isset($json['code']) ? (string)$json['code'] : (string)$json;
+        $status = isset($json->code) ? (string)$json->code : (string)$json;
         $this->_last_status = $status;
         return (bool)($status === 'done');
     }
