@@ -34,9 +34,9 @@ class Tasks_pinboard extends Tasks
         
         /*
             check last time this was run.
-            if never run, just grab todays 
+            if never run, start from now 
         */
-        $timestamp = $from ?: (int)$this->cache->get('last-check');
+        $timestamp = $from ?: (int)$this->cache->get('last-check', time());
         
         $pinboard = new PinboardAPI(null, $token);
         
