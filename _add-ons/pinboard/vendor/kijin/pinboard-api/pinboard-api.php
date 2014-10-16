@@ -444,7 +444,7 @@ class PinboardAPI
             $bookmark->title = (string)$entry->description;
             if (isset($entry->extended)) $bookmark->description = (string)$entry->extended;
             if (isset($entry->time)) $bookmark->timestamp = strtotime($entry->time);
-            if (isset($entry->tag)) $bookmark->tags = explode(' ', (string)$entry->tag);
+            if (isset($entry->tags)) $bookmark->tags = explode(' ', (string)$entry->tags);
             if (isset($entry->hash)) $bookmark->hash = (string)$entry->hash;
             if (isset($entry->meta)) $bookmark->meta = (string)$entry->meta;
             if (isset($entry->others)) $bookmark->others = (int)(string)$entry->others;
