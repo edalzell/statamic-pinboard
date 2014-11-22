@@ -1,5 +1,5 @@
 {
     "require": {
-        "kijin/pinboard-api": ">=0.2"
+        "kijin/pinboard-api": ">=0.3.0"
     }
 }

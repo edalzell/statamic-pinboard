@@ -4,25 +4,25 @@
         "Read more about it at http://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "24374ff509c774c976acf5f04113854b",
+    "hash": "5f0617493a84b518a4016c17816ef072",
     "packages": [
         {
             "name": "kijin/pinboard-api",
-            "version": "0.2.1",
+            "version": "0.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/kijin/pinboard-api.git",
-                "reference": "06825259e494893673808a3679c03a4d240f709d"
+                "reference": "8389201e943bb093592540df19e120a0ac9ab546"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/kijin/pinboard-api/zipball/06825259e494893673808a3679c03a4d240f709d",
-                "reference": "06825259e494893673808a3679c03a4d240f709d",
+                "url": "https://api.github.com/repos/kijin/pinboard-api/zipball/8389201e943bb093592540df19e120a0ac9ab546",
+                "reference": "8389201e943bb093592540df19e120a0ac9ab546",
                 "shasum": ""
             },
             "require": {
                 "ext-curl": "*",
-                "ext-simplexml": "*",
+                "ext-json": "*",
                 "php": ">=5.0.0"
             },
             "type": "library",
@@ -39,8 +39,12 @@
                 {
                     "name": "Kijin Sung",
                     "email": "kijin@kijinsung.com",
-                    "homepage": "http://www.kijinsung.com/",
                     "role": "Developer"
+                },
+                {
+                    "name": "Erin Dalzell",
+                    "email": "erin@thedalzells.org",
+                    "role": "Contributor"
                 }
             ],
             "description": "Pinboard API Client in PHP",
@@ -49,24 +53,14 @@
                 "bookmark",
                 "pinboard"
             ],
-            "time": "2014-08-30 02:56:34"
+            "time": "2014-10-29 10:13:36"
         }
     ],
-    "packages-dev": [
-
-    ],
-    "aliases": [
-
-    ],
+    "packages-dev": [],
+    "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [
-
-    ],
+    "stability-flags": [],
     "prefer-stable": false,
-    "platform": [
-
-    ],
-    "platform-dev": [
-
-    ]
+    "platform": [],
+    "platform-dev": []
 }

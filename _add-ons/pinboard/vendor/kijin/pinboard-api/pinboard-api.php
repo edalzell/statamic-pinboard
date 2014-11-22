@@ -4,9 +4,10 @@
  * Pinboard API Client in PHP
  * 
  * URL: http://github.com/kijin/pinboard-api
- * Version: 0.2.2
+ * Version: 0.3.0
  * 
- * Copyright (c) 2012-2013, Kijin Sung <kijin@kijinsung.com>
+ * Copyright (c) 2012-2014, Kijin Sung <kijin@kijinsung.com>
+ * Copyright (c) 2014, Erin Dalzell <erin@thedalzells.org>
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -32,7 +33,7 @@ class PinboardAPI
     // Settings are stored here.
     
     const API_BASE_URL = 'https://api.pinboard.in/v1/';
-    const API_CLIENT_VERSION = '0.2.2';
+    const API_CLIENT_VERSION = '0.3.0';
     const ALLOWED_URL_SCHEMES_REGEX = '/^(?:https?|javascript|mailto|ftp|file):/i';
     const RECENT_COUNT_MAX = 100;
     const USER_AGENT = 'Mozilla/5.0 (Pinboard API Client %s for PHP; http://github.com/kijin/pinboard-api)';
@@ -83,7 +84,7 @@ class PinboardAPI
     public function get_updated_time()
     {
         $json = $this->_remote('posts/update');
-        $timestamp = (string)$json['time'];
+        $timestamp = $json->update_time;
         return strtotime($timestamp);
     }
     
@@ -211,9 +212,9 @@ class PinboardAPI
         
         $json = $this->_remote('posts/dates', $args);
         $ret = array();
-        foreach ($json->date as $date)
+        foreach ($json->dates as $date => $count)
         {
-            $ret[] = new PinboardDate((string)$date['date'], (int)$date['count']);
+            $ret[] = new PinboardDate($date, (int)$count);
         }
         return $ret;
     }
@@ -228,16 +229,10 @@ class PinboardAPI
         }
         
         $json = $this->_remote('posts/suggest', array('url' => $bookmark));
-        $ret = array('popular' => array(), 'recommended' => array());
-        foreach ($json->popular as $popular)
-        {
-            $ret['popular'][] = (string)$popular;
-        }
-        foreach ($json->recommended as $recommended)
-        {
-            $ret['recommended'][] = (string)$recommended;
-        }
-        return $ret;
+        return (object)array(
+            'popular' => isset($json[0]->popular) ? $json[0]->popular : array(),
+            'recommended' => isset($json[1]->recommended) ? $json[1]->recommended : array(),
+        );
     }
     
     // Get all tags.
@@ -292,7 +287,7 @@ class PinboardAPI
     public function get_rss_token()
     {
         $json = $this->_remote('user/secret');
-        return (string)$json;
+        return isset($json->result) ? $json->result : null;
     }
     
     // Get the user's API token.
@@ -300,7 +295,7 @@ class PinboardAPI
     public function get_api_token()
     {
         $json = $this->_remote('user/api_token');
-        return (string)$json;
+        return isset($json->result) ? $json->result : null;
     }
     
     // Get the last status code.
@@ -319,7 +314,7 @@ class PinboardAPI
     
     // This method handles all remote method calls.
     
-    protected function _remote($method, $args = array(), $return_json = true)
+    protected function _remote($method, $args = array(), $use_json = true)
     {
         if ($this->_user === null || preg_match('/^' . preg_quote($this->_user, '/') . ':[0-9A-F]{20}$/', $this->_pass))
         {
@@ -331,7 +326,10 @@ class PinboardAPI
             $use_http_auth = true;
         }
         
-        $args['format'] = 'json';
+        if ($use_json)
+        {
+            $args['format'] = 'json';
+        }
         
         if (is_array($args) && count($args))
         {
@@ -385,16 +383,10 @@ class PinboardAPI
                 throw new PinboardException_ConnectionError('Unknown error');
         }
         
-        if ($return_json)
+        if ($use_json)
         {
-            try
-            {
-                $json = json_decode($response);
-            }
-            catch (Exception $e)
-            {
-                throw new PinboardException_InvalidResponse($e->getMessage());
-            }
+            $json = @json_decode($response);
+            if ($json === false) throw new PinboardException_InvalidResponse('Invalid JSON response');
             return $json;
         }
         else
@@ -435,38 +427,23 @@ class PinboardAPI
     protected function _json_to_bookmark($json)
     {
         $ret = array();
+        if (isset($json->posts)) $json = $json->posts;
         
         foreach ($json as $entry)
         {
+            if (!isset($entry->href)) continue;
             $bookmark = new PinboardBookmark;
             $bookmark->_api_instance_hash = $this->_instance_hash;
-            $bookmark->url = (string)$entry->href;
-            $bookmark->title = (string)$entry->description;
-            if (isset($entry->extended)) $bookmark->description = (string)$entry->extended;
-            if (isset($entry->time)) $bookmark->timestamp = strtotime($entry->time);
-            if (isset($entry->tags)) $bookmark->tags = explode(' ', (string)$entry->tags);
-            if (isset($entry->hash)) $bookmark->hash = (string)$entry->hash;
-            if (isset($entry->meta)) $bookmark->meta = (string)$entry->meta;
-            if (isset($entry->others)) $bookmark->others = (int)(string)$entry->others;
-            
-            if (isset($entry->shared))
-            {
-                $bookmark->is_public = ((string)$entry->shared === 'yes');
-            }
-            else
-            {
-                $bookmark->is_public = true;
-            }
-            
-            if (isset($entry->toread))
-            {
-                $bookmark->is_unread = ((string)$entry->toread === 'yes');
-            }
-            else
-            {
-                $bookmark->is_unread = false;
-            }
-            
+            $bookmark->url = $entry->href;
+            $bookmark->title = $entry->description;
+            $bookmark->description = $entry->extended;
+            $bookmark->timestamp = strtotime($entry->time);
+            $bookmark->tags = explode(' ', $entry->tags);
+            $bookmark->hash = $entry->hash;
+            $bookmark->meta = $entry->meta;
+            $bookmark->others = isset($entry->others) ? (int)$entry->others : 0;
+            $bookmark->is_public = ($entry->shared === 'yes');
+            $bookmark->is_unread = ($entry->toread === 'yes');
             $ret[] = $bookmark;
         }
         
@@ -478,12 +455,14 @@ class PinboardAPI
     protected function _json_to_note($json)
     {
         $ret = array();
+        if (isset($json->notes)) $json = $json->notes;
+        if (is_object($json)) $json = array($json);
         
-        $entries = $json->notes;
-        foreach ($entries as $entry)
+        foreach ($json as $entry)
         {
+            if (!isset($entry->id)) continue;
             $note = new PinboardNote;
-            $note->id = (string)$entry['id'];
+            $note->id = (string)$entry->id;
             if (isset($entry->title)) $note->title = (string)$entry->title;
             if (isset($entry->hash)) $note->hash = (string)$entry->hash;
             if (isset($entry->created_at)) $note->created_at = (string)$entry->created_at;
@@ -500,7 +479,9 @@ class PinboardAPI
     
     protected function _json_to_status($json)
     {
-        $status = isset($json->code) ? (string)$json->code : (string)$json;
+        $status = '';
+        if (isset($json->result_code)) $status = strval($json->result_code);
+        if (!$status && isset($json->result)) $status = strval($json->result);
         $this->_last_status = $status;
         return (bool)($status === 'done');
     }

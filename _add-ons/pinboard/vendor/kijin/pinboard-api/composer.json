@@ -9,14 +9,18 @@
         {
             "name": "Kijin Sung",
             "email": "kijin@kijinsung.com",
-            "homepage": "http://www.kijinsung.com/",
             "role": "Developer"
+        },
+        {
+            "name": "Erin Dalzell",
+            "email": "erin@thedalzells.org",
+            "role": "Contributor"
         }
     ],
     "require": {
         "php": ">=5.0.0",
         "ext-curl": "*",
-        "ext-simplexml": "*"
+        "ext-json": "*"
     },
     "autoload": {
         "files": ["pinboard-api.php"]
