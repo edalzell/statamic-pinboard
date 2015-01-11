@@ -24,7 +24,7 @@ class Tasks_pinboard extends Tasks
         return true;
     }    
 
-    public function writeEntry($title, $url, $description, $author=null, $categories=array(), $tags=array(), $timestamp=null, $folder='blog' ) {
+    public function writeEntry($title, $url, $description, $author=null, $categories=array(), $tags=array(), $folder='blog' ) {
 
         // get the Statamic folder used for the link posts
         $page_path = Path::resolve($folder);
@@ -32,21 +32,38 @@ class Tasks_pinboard extends Tasks
 		// the slug comes from the title in lowercase with '-' as a delimiter
 		$slug = Slug::make($title, array('lowercase' => true));
 
-		// TODO: check the _entry_timestamps config to determine how to name the file
-		$prefix = date('Y-m-d-Hi');
+		// create the appropriate prefix
+		$entry_type = Statamic::get_entry_type($page_path);
+
+		$order_prefix = "";
+		if ($entry_type == 'date') {
+			if (Config::get('_entry_timestamps')) {
+				$order_prefix = date('Y-m-d-Hi-');
+			}
+			else {
+				$order_prefix = date('Y-m-d-');
+			}
+		} else if ($entry_type == 'number') {
+			$order_prefix = Statamic::get_next_numeric($page_path) . "-";
+		}
 
 		// make the file name
-		$filename = $prefix.'-'.$slug;
+		$filename = $order_prefix.'-'.$slug;
 
 		$fullpath = $this->getFullPath($page_path, $filename);
 	
 		$yaml = array(
 			'title' => $title,
-			'tags' => $tags,
 			'link' => $url,
-			'author' => $author,
-			'categories' => $categories,
-			'date' => date("Y-m-d H:i", $timestamp ?: time()));
+			'author' => $author);
+			
+		if (count($categories) > 0) {
+			$yaml['categories'] => $categories;
+		}
+
+		if (count($tags) > 0) {
+			$yaml['tags'] => $tags;
+		}
 
 		File::put($fullpath, File::buildContent($yaml, $description));
     }
@@ -93,14 +110,13 @@ class Tasks_pinboard extends Tasks
 				// add the tweet contents to the description as a quote
 				$bookmark->description = '> '.$tweet['text'].PHP_EOL.PHP_EOL.$bookmark->description;
 			}
-
+			
     		$this->writeEntry($bookmark->title,
     						  $bookmark->url,
     						  $bookmark->description,
     						  $this->fetchConfig('author'),
     						  array('links'),
     						  array_diff($bookmark->tags, array($tag)),
-    						  $bookmark->timestamp,
     						  $this->fetchConfig('link_page', 'links'));
 		}
     }
