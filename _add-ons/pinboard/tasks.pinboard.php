@@ -38,13 +38,13 @@ class Tasks_pinboard extends Tasks
 		$order_prefix = "";
 		if ($entry_type == 'date') {
 			if (Config::get('_entry_timestamps')) {
-				$order_prefix = date('Y-m-d-Hi-');
+				$order_prefix = date('Y-m-d-Hi');
 			}
 			else {
-				$order_prefix = date('Y-m-d-');
+				$order_prefix = date('Y-m-d');
 			}
 		} else if ($entry_type == 'number') {
-			$order_prefix = Statamic::get_next_numeric($page_path) . "-";
+			$order_prefix = Statamic::get_next_numeric($page_path);
 		}
 
 		// make the file name
@@ -58,11 +58,11 @@ class Tasks_pinboard extends Tasks
 			'author' => $author);
 			
 		if (count($categories) > 0) {
-			$yaml['categories'] => $categories;
+			$yaml['categories'] = $categories;
 		}
 
 		if (count($tags) > 0) {
-			$yaml['tags'] => $tags;
+			$yaml['tags'] = $tags;
 		}
 
 		File::put($fullpath, File::buildContent($yaml, $description));
