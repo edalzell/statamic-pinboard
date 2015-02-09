@@ -32,3 +32,7 @@ If you want to manually pull older bookmarks:
 * by URL, run 'http://your-statamic-site/TRIGGER/pinboard/get?url='complete-url-to-link'
 
 Bookmarks are added with current date/time **not** the bookmark time.
+
+## LICENSE
+
+[MIT License](http://emd.mit-license.org)
