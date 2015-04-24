@@ -5,7 +5,14 @@ class Hooks_pinboard extends Hooks
     public function pinboard__get() {
         $from = Request::get('from');
         $url = Request::get('url');
-        $this->tasks->writeRecentLinks($from, $url);
+        
+        if (($from == null) && ($url == null)) {
+	        $this->tasks->writeRecentLinks();
+        } else if ($from != null) {
+			$this->tasks->writeLinks($from);
+		} else if ($url != null) {
+			$this->tasks->writeLink($url);
+		}
     }
     
     public function pinboard__write_test_bookmark() {

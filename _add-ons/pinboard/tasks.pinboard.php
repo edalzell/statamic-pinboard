@@ -18,9 +18,21 @@ class Tasks_pinboard extends Tasks
         $this->add($refresh, 'writeRecentLinks');
     }
     
-    public function writeRecentLinks($from = null, $url = null)
+    public function writeRecentLinks($from = null)
     {
-        $this->writeBookmarks($this->getBookmarks($from, $url));
+        $this->writeBookmarks($this->getBookmarks());
+        return true;
+    }    
+
+    public function writeLinks($from = null)
+    {
+        $this->writeBookmarks($this->getBookmarks($from));
+        return true;
+    }    
+
+    public function writeLink($url = null)
+    {
+        $this->writeBookmarks($this->getBookmark($url));
         return true;
     }    
 
@@ -68,7 +80,7 @@ class Tasks_pinboard extends Tasks
 		File::put($fullpath, File::buildContent($yaml, $description));
     }
     
-    private function getBookmarks($from, $url) {
+    private function getBookmarks($from) {
         //get the token from the config
         $token = $this->fetchConfig('token', null, null, false, false);
 
@@ -87,6 +99,20 @@ class Tasks_pinboard extends Tasks
         
         // when done, store the last timestamp so we don't fetch ones we've already retrieved
         $this->cache->put('last-check', time());
+        
+        return $bookmarks;
+    }
+    
+    private function getBookmark($url) {
+        //get the token from the config
+        $token = $this->fetchConfig('token', null, null, false, false);
+
+        // get the tag used for the links
+        $tag = $this->fetchConfig('link_tag', 'lb');
+        
+        $pinboard = new PinboardAPI(null, $token);
+        
+        $bookmarks = $pinboard->get($url, $tag);
         
         return $bookmarks;
     }
