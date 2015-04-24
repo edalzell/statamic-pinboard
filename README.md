@@ -18,11 +18,7 @@ A Statamic add-on for Pinboard that creates entries from specific, public bookma
 5. If you want to pull Tweets from your Pinboard, install the [statamic-twitter add-on](https://github.com/edalzell/statamic-twitter)
 6. Enjoy! :)
 
-## Requirements
-* entries must be datetime prefixed (i.e. 2014-09-06-1414-entry-slug.md). This Add-On does **not** detect the entry type.
-
 ## Usage
-
 
 Today's tagged bookmarks are automatically pulled and made into entries. The add-on only pulls bookmarks since you last ran the check.
 
