@@ -80,7 +80,7 @@ class Tasks_pinboard extends Tasks
 		File::put($fullpath, File::buildContent($yaml, $description));
     }
     
-    private function getBookmarks($from) {
+    private function getBookmarks($from = null) {
         //get the token from the config
         $token = $this->fetchConfig('token', null, null, false, false);
 
@@ -146,7 +146,7 @@ class Tasks_pinboard extends Tasks
     						  $this->fetchConfig('link_page', 'links'));
 		}
     }
-
+    
     // from a page and an entry slug, create the full path
     private function getFullPath($folder, $slug) {
         // create the file path
