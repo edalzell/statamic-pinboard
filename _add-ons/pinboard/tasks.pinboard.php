@@ -43,6 +43,10 @@ class Tasks_pinboard extends Tasks
         
 		// the slug comes from the title in lowercase with '-' as a delimiter
 		$slug = Slug::make($title, array('lowercase' => true));
+		
+		// there may be UTF-8 spaces still left and I have no idea how to get rid of them
+		// properly so this is an ugly hack
+		$slug = str_replace("%C2%A0","-", urlencode($slug));
 
 		// create the appropriate prefix
 		$entry_type = Statamic::get_entry_type($page_path);
