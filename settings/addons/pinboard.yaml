@@ -1,5 +1,5 @@
-token: usear:token
-pinboard_tag: pinboard-tag
+token: user:token
+pinboard_tag: lb
 link_taxonomy: categories
 link_term: links
 tag_taxonomy: tags
