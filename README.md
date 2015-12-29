@@ -1,7 +1,7 @@
-statamic-pinboard
+statamicv1-pinboard
 =================
 
-A Statamic add-on for Pinboard that creates entries from specific, public bookmarks from your Pinboard account.
+A Statamic V1 add-on for Pinboard that creates entries from specific, public bookmarks from your Pinboard account.
 
 ## Installing
 1. Copy the "_add-ons" folder contents to your Statamic root directory;
