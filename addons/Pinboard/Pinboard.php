@@ -1,0 +1,179 @@
+<?php
+
+namespace Statamic\Addons\Pinboard;
+
+use Statamic\Extend\Addon;
+use Carbon\Carbon;
+use Statamic\API\Entry;
+use Statamic\API\Content;
+use Statamic\API\TaxonomyTerm;
+use Statamic\API\User;
+use Statamic\API\Str;
+use Statamic\API\Helper;
+use Statamic\Exceptions\ApiNotFoundException;
+
+use PinboardAPI;
+
+class Pinboard extends Addon
+{
+    public function writeRecentLinks($from = null)
+    {
+        $this->writeBookmarks($this->getBookmarks());
+        return true;
+    }    
+
+    public function writeLinks($from = null) {
+        $this->writeBookmarks($this->getBookmarks($from));
+        return true;
+    }    
+
+    public function writeLink($url = null) {
+        $this->writeBookmarks($this->getBookmark($url));
+        return true;
+    }    
+
+    public function writeEntry($title, $url, $description, $author=null, $taxonomies=array(), $collection=null) {
+		
+		if (!$collection) {
+			$collection = $this->getConfig('collection');
+		}
+		
+        $entry = Entry::create(Str::slug($title))
+        			->collection($collection)
+        			->order($this->getOrderPrefix($collection))
+        			->get();
+
+		$entry->set('title', $title);
+
+		if ($url) {
+	        $entry->set('link', $url);
+	    }
+	    
+	    // read default author if not passed in 
+	    if (!$author) {
+	    	$author = $this->getConfig('author');
+	    }
+	    
+        $entry->set('author', User::username($author)->id());
+        
+        foreach ($taxonomies as $taxonomy => $terms) {
+	        $entry->set($taxonomy, $this->getTermIds($taxonomy, $terms));
+	    }
+
+		$entry->content($description);
+
+        $entry->save();
+
+
+		// there may be UTF-8 spaces still left and I have no idea how to get rid of them
+		// properly so this is an ugly hack
+//		$slug = str_replace("%C2%A0","-", urlencode($slug));
+
+
+    }
+    
+    private function getBookmarks($from = null) {
+        //get the token from the config
+        $token = $this->getConfig('token');
+
+        // get the tag used for the links
+        $tag = $this->getConfig('pinboard_tag', 'lb');
+        
+        // check last time this was run.
+        // if never run, start from now 
+        
+        $timestamp = $from ?: (int)$this->cache->get('last-check', time());
+        
+        $pinboard = new PinboardAPI(null, $token);
+        
+        $bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
+        
+        // when done, store the last timestamp so we don't fetch ones we've already retrieved
+        $this->cache->put('last-check', time());
+        
+        return $bookmarks;
+    }
+    
+    private function getBookmark($url) {
+        //get the token from the config
+        $token = $this->getConfig('token');
+
+        // get the tag used for the links
+        $tag = $this->getConfig('pinboard_tag', 'lb');
+        
+        $pinboard = new PinboardAPI(null, $token);
+        
+        return $pinboard->get($url, $tag);
+    }
+    
+    private function writeBookmarks($bookmarks) {
+        // get the pinboard tag used for the links
+        $pinboard_tag = $this->getConfig('pinboard_tag', 'lb');
+        
+        // do they have my Twitter Add-on installed?
+        $twitterAddon = null;
+        
+        try {
+        	$twitterAddon = $this->api('twitter');
+        } catch (ApiNotFoundException $e) {}
+        
+        foreach ($bookmarks as $bookmark) {
+			// if the twitter_embed add-on is installed and the bookmark is a twitter link
+			if ($twitterAddon && strpos($bookmark->url, "https://twitter.com") === 0) {
+				// get the id
+				$url_array = explode('/', $bookmark->url);
+				$id = $url_array[count($url_array)-1];
+		
+				$tweet = $twitterAddon->getTweet($id);
+				
+				// add the tweet contents to the description as a quote
+				$bookmark->description = '> '.$tweet['text'].PHP_EOL.PHP_EOL.$bookmark->description;
+			}
+			
+    		$this->writeEntry($bookmark->title,
+    						  $bookmark->url,
+    						  $bookmark->description,
+    						  $this->getConfig('author'),
+    						  array($this->getConfig('link_taxonomy') => array($this->getConfig('link_term')),
+    						  		$this->getConfig('tag_taxonomy') => array_diff($bookmark->tags, array($pinboard_tag))),
+    						  $this->getConfig('collection'));
+		}
+    }
+    
+    private function getOrderPrefix($collection) {
+        //get the collection so we can figure out the order
+        $order_type = Content::collection($collection)->order();
+        
+        if ($order_type == 'date') {
+			$prefix = Carbon::now()->format('Y-m-d-hi');
+		} else {
+			$prefix = Entries::getFromCollection($collection)->count() + 1;
+		}
+		
+		return $prefix;	
+    }
+    
+    private function getTermIds($taxonomy, $slugs) {
+		$terms = TaxonomyTerm::getFromTaxonomy($taxonomy, $slugs);
+		
+		return $terms->map(function($term) {
+			if (!$term) {
+				$term = $this->createTerm($slug, $taxonomy);
+			}
+			
+			return $term->id();
+		})->all();
+    }
+
+    private function createTerm($taxonomy, $slug) {
+    	$tag = TaxonomyTerm::create($slug)
+    			->group($taxonomy)
+    			->with(['title' => Str::title($slug), 'id' => Helper::makeUuid()])
+    			->get();
+    	
+    	$tag->save();
+
+    	return $tag;
+    }
+    
+}
