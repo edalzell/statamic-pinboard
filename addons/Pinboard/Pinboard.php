@@ -167,7 +167,7 @@ class Pinboard extends Addon
 
     private function createTerm($taxonomy, $slug) {
     	$tag = TaxonomyTerm::create($slug)
-    			->group($taxonomy)
+    			->taxonomy($taxonomy)
     			->with(['title' => Str::title($slug), 'id' => Helper::makeUuid()])
     			->get();
     	
