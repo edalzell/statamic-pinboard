@@ -3,5 +3,7 @@ pinboard_tag: lb
 link_taxonomy: categories
 link_term: links
 tag_taxonomy: tags
+not_tags:
+  - sales
 collection: blog
-author: you
+author: erin

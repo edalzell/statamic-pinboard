@@ -2,11 +2,11 @@
 
 namespace Statamic\Addons\Pinboard;
 
-use Statamic\Extend\Task;
+use Statamic\Extend\Tasks;
 use Illuminate\Console\Scheduling\Schedule;
 use Log;
 
-class PinboardTask extends Task {
+class PinboardTasks extends Tasks {
 
 	// look here for common code: http://docs.talonsbeard.com/addons/best-practices/keeping-dry
     private $core;
@@ -18,8 +18,7 @@ class PinboardTask extends Task {
 	public function schedule(Schedule $schedule)    {
 		$schedule->call(function () {
 			$this->core = new Pinboard;
-			Log::debug("task ran");
 			$this->core->writeRecentLinks();
-        })->everyTenMinutes();
+        })->everyFiveMinutes();
     }
 }

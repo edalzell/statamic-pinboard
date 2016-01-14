@@ -57,7 +57,9 @@ class Pinboard extends Addon
         $entry->set('author', User::username($author)->id());
         
         foreach ($taxonomies as $taxonomy => $terms) {
-	        $entry->set($taxonomy, $this->getTermIds($taxonomy, $terms));
+        	if ($terms != null ) {
+		        $entry->set($taxonomy, $this->getTermIds($taxonomy, $terms));
+		    }
 	    }
 
 		$entry->content($description);
@@ -134,10 +136,26 @@ class Pinboard extends Addon
     						  $bookmark->url,
     						  $bookmark->description,
     						  $this->getConfig('author'),
-    						  array($this->getConfig('link_taxonomy') => array($this->getConfig('link_term')),
-    						  		$this->getConfig('tag_taxonomy') => array_diff($bookmark->tags, array($pinboard_tag))),
+    						  $this->getTaxonomies(array_diff($bookmark->tags, array($pinboard_tag))),
     						  $this->getConfig('collection'));
 		}
+    }
+    
+    private function getTaxonomies($tags) {
+    	$link_taxonomies = array($this->getConfig('link_term'));
+    	$tag_taxonomies = null;
+    	$not_tags = $this->getConfig('not_tags');
+    	
+    	foreach ($tags as $tag) {
+    		if (in_array($tag, $not_tags)) {
+    			$link_taxonomies[] = $tag;
+    		} else {
+    			$tag_taxonomies[] = $tag;
+    		}
+    	}
+    	
+    	return array($this->getConfig('link_taxonomy') => $link_taxonomies,
+    				 $this->getConfig('tag_taxonomy') => $tag_taxonomies);
     }
     
     private function getOrderPrefix($collection) {
@@ -154,15 +172,17 @@ class Pinboard extends Addon
     }
     
     private function getTermIds($taxonomy, $slugs) {
-		$terms = TaxonomyTerm::getFromTaxonomy($taxonomy, $slugs);
-		
-		return $terms->map(function($term) {
+		$ids = array_map(function($slug) use ($taxonomy) {
+			$term = TaxonomyTerm::getFromTaxonomy($taxonomy, $slug);
+			
 			if (!$term) {
 				$term = $this->createTerm($slug, $taxonomy);
 			}
-			
+
 			return $term->id();
-		})->all();
+		}, $slugs);
+		
+		return $ids;
     }
 
     private function createTerm($taxonomy, $slug) {
