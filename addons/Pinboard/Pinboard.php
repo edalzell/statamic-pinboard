@@ -11,6 +11,7 @@ use Statamic\API\User;
 use Statamic\API\Str;
 use Statamic\API\Helper;
 use Statamic\Exceptions\ApiNotFoundException;
+use Statamic\API\Search;
 
 use PinboardAPI;
 
@@ -139,6 +140,9 @@ class Pinboard extends Addon
     						  $this->getTaxonomies(array_diff($bookmark->tags, array($pinboard_tag))),
     						  $this->getConfig('collection'));
 		}
+		
+		// update the search index
+		Search::update();
     }
     
     private function getTaxonomies($tags) {
