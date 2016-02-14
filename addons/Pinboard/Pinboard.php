@@ -2,6 +2,7 @@
 
 namespace Statamic\Addons\Pinboard;
 
+use Log;
 use Statamic\Extend\Addon;
 use Carbon\Carbon;
 use Statamic\API\Entry;
@@ -151,8 +152,8 @@ class Pinboard extends Addon
 		try {
 			// update the search index
 			Search::update();
-		} catch (AlgoliaSearch\AlgoliaException $e) {
-			$this->log->error($e);
+		} catch (Exception $e) {
+			Log::error($e->getMessage());
 		}
     }
     
