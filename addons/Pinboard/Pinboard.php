@@ -110,6 +110,11 @@ class Pinboard extends Addon
     }
     
     private function writeBookmarks($bookmarks) {
+    
+    	if (count($bookmarks) == 0) {
+    		return;
+    	}
+    	
         // get the pinboard tag used for the links
         $pinboard_tag = $this->getConfig('pinboard_tag', 'lb');
         
@@ -141,8 +146,14 @@ class Pinboard extends Addon
     						  $this->getConfig('collection'));
 		}
 		
-		// update the search index
-		Search::update();
+		// this can throw AlgoliaSearch\AlgoliaException and I don't want to break here
+		// so let's just log and continue
+		try {
+			// update the search index
+			Search::update();
+		} catch (AlgoliaSearch\AlgoliaException $e) {
+			$this->log->error($e);
+		}
     }
     
     private function getTaxonomies($tags) {
