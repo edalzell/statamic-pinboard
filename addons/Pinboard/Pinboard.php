@@ -88,13 +88,16 @@ class Pinboard extends Addon
         
         $timestamp = $from ?: (int)$this->cache->get('last-check', time());
         
-        $pinboard = new PinboardAPI(null, $token);
-        
-        $bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
-        
-        // when done, store the last timestamp so we don't fetch ones we've already retrieved
-        $this->cache->put('last-check', time());
-        
+        try {
+			$pinboard = new PinboardAPI(null, $token);
+		
+			$bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
+		
+			// when done, store the last timestamp so we don't fetch ones we've already retrieved
+			$this->cache->put('last-check', time());
+		} catch (Exception $e) {
+			Log::error($e->getMessage());
+		}        
         return $bookmarks;
     }
     
@@ -105,9 +108,17 @@ class Pinboard extends Addon
         // get the tag used for the links
         $tag = $this->getConfig('pinboard_tag', 'lb');
         
-        $pinboard = new PinboardAPI(null, $token);
+        $bookmark = array();
         
-        return $pinboard->get($url, $tag);
+        try {
+			$pinboard = new PinboardAPI(null, $token);
+		
+			$bookmark = $pinboard->get($url, $tag);
+		} catch (Exception $e) {
+			Log::error($e->getMessage());
+		}        
+
+        return $bookmark;
     }
     
     private function writeBookmarks($bookmarks) {
