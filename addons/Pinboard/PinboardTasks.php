@@ -17,8 +17,7 @@ class PinboardTasks extends Tasks {
     
 	public function schedule(Schedule $schedule)    {
 		$schedule->call(function () {
-			$this->core = new Pinboard;
 			$this->core->writeRecentLinks();
-        })->everyFiveMinutes();
+        })->everyTenMinutes();
     }
 }

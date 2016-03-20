@@ -3,18 +3,21 @@
 namespace Statamic\Addons\Pinboard;
 
 use Log;
-use Statamic\Extend\Addon;
 use Carbon\Carbon;
-use Statamic\API\Entry;
-use Statamic\API\Content;
-use Statamic\API\TaxonomyTerm;
-use Statamic\API\User;
 use Statamic\API\Str;
-use Statamic\API\Helper;
-use Statamic\Exceptions\ApiNotFoundException;
+use Statamic\API\User;
+use Statamic\API\Entry;
 use Statamic\API\Search;
+use Statamic\API\Helper;
+use Statamic\API\Content;
+use Statamic\Extend\Addon;
+use Statamic\API\TaxonomyTerm;
+use Statamic\Exceptions\ApiNotFoundException;
 
+// need to include these because they don't use namespaces
 use PinboardAPI;
+use PinboardException;
+use PinboardException_ConnectionError;
 
 class Pinboard extends Addon
 {
@@ -88,6 +91,8 @@ class Pinboard extends Addon
         
         $timestamp = $from ?: (int)$this->cache->get('last-check', time());
         
+        $bookmarks = array();
+        
         try {
 			$pinboard = new PinboardAPI(null, $token);
 		
@@ -95,7 +100,9 @@ class Pinboard extends Addon
 		
 			// when done, store the last timestamp so we don't fetch ones we've already retrieved
 			$this->cache->put('last-check', time());
-		} catch (Exception $e) {
+		} catch (PinboardException_ConnectionError $ce) {
+			// just ignore this
+		} catch (PinboardException $e) {
 			Log::error($e->getMessage());
 		}        
         return $bookmarks;
@@ -114,7 +121,9 @@ class Pinboard extends Addon
 			$pinboard = new PinboardAPI(null, $token);
 		
 			$bookmark = $pinboard->get($url, $tag);
-		} catch (Exception $e) {
+		} catch (PinboardException_ConnectionError $ce) {
+			// just ignore this
+		} catch (PinboardException $e) {
 			Log::error($e->getMessage());
 		}        
 
@@ -123,7 +132,7 @@ class Pinboard extends Addon
     
     private function writeBookmarks($bookmarks) {
     
-    	if (count($bookmarks) == 0) {
+    	if ($bookmarks == null || count($bookmarks) == 0) {
     		return;
     	}
     	

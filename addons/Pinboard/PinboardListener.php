@@ -27,8 +27,6 @@ class PinboardListener extends Listener {
         $from = Request::get('from');
         $url = Request::get('url');
         
-    	$this->core = new Pinboard;
-
         if (($from == null) && ($url == null)) {
 	        $this->core->writeRecentLinks();
         } else if ($from != null) {
@@ -42,8 +40,6 @@ class PinboardListener extends Listener {
         $title = Request::get('title','No title');
         $url = Request::get('url','No URL');
         $desc = Request::get('desc','No description');
-
-    	$this->core = new Pinboard;
 
         $this->core->writeEntry($title, $url, $desc, null, array('categories' => array('links'), 'tags' => array('foo')));
     }
