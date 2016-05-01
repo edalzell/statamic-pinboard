@@ -199,7 +199,7 @@ class Pinboard extends Addon
         $order_type = Content::collection($collection)->order();
         
         if ($order_type == 'date') {
-			$prefix = Carbon::now()->format('Y-m-d-hi');
+			$prefix = Carbon::now()->format('Y-m-d-Hi');
 		} else {
 			$prefix = Entries::getFromCollection($collection)->count() + 1;
 		}
