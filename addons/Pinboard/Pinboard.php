@@ -9,9 +9,9 @@ use Statamic\API\User;
 use Statamic\API\Entry;
 use Statamic\API\Search;
 use Statamic\API\Helper;
-use Statamic\API\Content;
 use Statamic\Extend\Addon;
-use Statamic\API\TaxonomyTerm;
+use Statamic\API\Collection;
+use Statamic\API\Term;
 use Statamic\Exceptions\ApiNotFoundException;
 
 // need to include these because they don't use namespaces
@@ -59,7 +59,7 @@ class Pinboard extends Addon
 	    	$author = $this->getConfig('author');
 	    }
 	    
-        $entry->set('author', User::username($author)->id());
+        $entry->set('author', User::whereUsername($author)->id());
         
         foreach ($taxonomies as $taxonomy => $terms) {
         	if ($terms != null ) {
@@ -103,7 +103,7 @@ class Pinboard extends Addon
 		} catch (PinboardException_ConnectionError $ce) {
 			// just ignore this
 		} catch (PinboardException $e) {
-			Log::error($e->getMessage());
+			\Log::error($e->getMessage());
 		}        
         return $bookmarks;
     }
@@ -124,7 +124,7 @@ class Pinboard extends Addon
 		} catch (PinboardException_ConnectionError $ce) {
 			// just ignore this
 		} catch (PinboardException $e) {
-			Log::error($e->getMessage());
+			\Log::error($e->getMessage());
 		}        
 
         return $bookmark;
@@ -196,12 +196,12 @@ class Pinboard extends Addon
     
     private function getOrderPrefix($collection) {
         //get the collection so we can figure out the order
-        $order_type = Content::collection($collection)->order();
+        $order_type = Collection::whereHandle($collection)->order();
         
         if ($order_type == 'date') {
 			$prefix = Carbon::now()->format('Y-m-d-Hi');
 		} else {
-			$prefix = Entries::getFromCollection($collection)->count() + 1;
+			$prefix = Entry::whereCollection($collection)->count() + 1;
 		}
 		
 		return $prefix;	
@@ -209,7 +209,7 @@ class Pinboard extends Addon
     
     private function getTermIds($taxonomy, $slugs) {
 		$ids = array_map(function($slug) use ($taxonomy) {
-			$term = TaxonomyTerm::getFromTaxonomy($taxonomy, $slug);
+			$term = Term::whereSlug($slug, $taxonomy);
 			
 			if (!$term) {
 				$term = $this->createTerm($slug, $taxonomy);
@@ -222,7 +222,7 @@ class Pinboard extends Addon
     }
 
     private function createTerm($taxonomy, $slug) {
-    	$tag = TaxonomyTerm::create($slug)
+    	$tag = Term::create($slug)
     			->taxonomy($taxonomy)
     			->with(['title' => Str::title($slug), 'id' => Helper::makeUuid()])
     			->get();

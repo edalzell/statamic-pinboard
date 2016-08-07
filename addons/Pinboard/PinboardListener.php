@@ -17,6 +17,7 @@ class PinboardListener extends Listener {
     ];
     
     // look here for common code: http://docs.talonsbeard.com/addons/best-practices/keeping-dry
+    /** @var  Pinboard */
     private $core;
     
     public function init() {
