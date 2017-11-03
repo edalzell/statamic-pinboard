@@ -1,8 +1,7 @@
 name: Pinboard
-version: 1.0
+version: 1.1
 description: >
-  Periodically polls your Pinboard account
-  and creates link entries
+  Periodically polls your Pinboard account and creates link entries
 url: https://github.com/edalzell
 developer: Erin Dalzell
 developer_url: https://github.com/edalzell
