@@ -30,7 +30,7 @@ fields:
   collection:
     type: collections
     max_items: 1
-    instructions: Collection to add the bookmarks too
+    instructions: Collection to add the bookmarks to
   author:
     type: users
     max_items: 1

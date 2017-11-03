@@ -69,29 +69,6 @@ trait Core
         $entry->save();
     }
 
-    /**
-     * @return \Illuminate\Support\Collection
-     */
-    public function getTags()
-    {
-        $tags = array();
-
-        try {
-            $tags = $this->pinboard->get_tags();
-
-        } catch (PinboardException_ConnectionError $ce) {
-            // just ignore this
-        } catch (PinboardException_InvalidResponse $ir) {
-            // just ignore this
-        } catch (PinboardException $e) {
-            \Log::error($e->getMessage());
-        }
-
-        return collect($tags)->map(function ($tag, $ignored) {
-            return (string)$tag;
-        });
-    }
-    
     private function getBookmarks($from = null) {
         // get the tag used for the links
         $tag = $this->getConfig('pinboard_tag', 'lb');
