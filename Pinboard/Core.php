@@ -5,22 +5,23 @@ namespace Statamic\Addons\Pinboard;
 use Log;
 use Carbon\Carbon;
 use Statamic\API\Str;
-use Statamic\API\User;
+use Statamic\API\Term;
+use Statamic\API\Cache;
 use Statamic\API\Entry;
 use Statamic\API\Search;
-use Statamic\API\Helper;
-use Statamic\Extend\Addon;
 use Statamic\API\Collection;
-use Statamic\API\Term;
-use Statamic\Exceptions\ApiNotFoundException;
+use Statamic\Extend\Extensible;
+use Illuminate\Support\Facades\Artisan as Please;
 
 // need to include these because they don't use namespaces
-use PinboardAPI;
 use PinboardException;
 use PinboardException_ConnectionError;
+use PinboardException_InvalidResponse;
 
-class Pinboard extends Addon
+trait Core
 {
+    use Extensible;
+
     public function writeRecentLinks($from = null)
     {
         $this->writeBookmarks($this->getBookmarks());
@@ -38,94 +39,97 @@ class Pinboard extends Addon
     }    
 
     public function writeEntry($title, $url, $description, $author=null, $taxonomies=array(), $collection=null) {
-		
-		if (!$collection) {
-			$collection = $this->getConfig('collection');
-		}
+
+        if (!$collection) {
+            $collection = $this->getConfig('collection');
+        }
 		
         $entry = Entry::create(Str::slug($title))
         			->collection($collection)
         			->order($this->getOrderPrefix($collection))
+                    ->with(['title'=> $title])
         			->get();
-
-		$entry->set('title', $title);
 
 		if ($url) {
 	        $entry->set('link', $url);
 	    }
 	    
-	    // read default author if not passed in 
-	    if (!$author) {
-	    	$author = $this->getConfig('author');
-	    }
-	    
-        $entry->set('author', User::whereUsername($author)->id());
+	    // read default author if not passed in
+
+        $entry->set('author', $author ? $author : $this->getConfig('author'));
         
         foreach ($taxonomies as $taxonomy => $terms) {
         	if ($terms != null ) {
-		        $entry->set($taxonomy, $this->getTermIds($taxonomy, $terms));
+		        $entry->set($taxonomy, $terms);
 		    }
 	    }
 
 		$entry->content($description);
 
         $entry->save();
+    }
 
+    /**
+     * @return \Illuminate\Support\Collection
+     */
+    public function getTags()
+    {
+        $tags = array();
 
-		// there may be UTF-8 spaces still left and I have no idea how to get rid of them
-		// properly so this is an ugly hack
-//		$slug = str_replace("%C2%A0","-", urlencode($slug));
+        try {
+            $tags = $this->pinboard->get_tags();
 
+        } catch (PinboardException_ConnectionError $ce) {
+            // just ignore this
+        } catch (PinboardException_InvalidResponse $ir) {
+            // just ignore this
+        } catch (PinboardException $e) {
+            \Log::error($e->getMessage());
+        }
 
+        return collect($tags)->map(function ($tag, $ignored) {
+            return (string)$tag;
+        });
     }
     
     private function getBookmarks($from = null) {
-        //get the token from the config
-        $token = $this->getConfig('token');
-
         // get the tag used for the links
         $tag = $this->getConfig('pinboard_tag', 'lb');
         
         // check last time this was run.
-        // if never run, start from now 
-        
+        // if never run, start from now
         $timestamp = $from ?: (int)$this->cache->get('last-check', time());
         
         $bookmarks = array();
         
         try {
-			$pinboard = new PinboardAPI(null, $token);
-		
-			$bookmarks = $pinboard->get_all(null, null, $tag, $timestamp);
+			$bookmarks = $this->pinboard->get_all(null, null, $tag, $timestamp);
 		
 			// when done, store the last timestamp so we don't fetch ones we've already retrieved
 			$this->cache->put('last-check', time());
-		} catch (PinboardException_ConnectionError $ce) {
-			// just ignore this
+        } catch (PinboardException_ConnectionError $ce) {
+            // just ignore this
+        } catch (PinboardException_InvalidResponse $ir) {
+            // just ignore this
 		} catch (PinboardException $e) {
 			\Log::error($e->getMessage());
-		}        
+        }
         return $bookmarks;
     }
     
     private function getBookmark($url) {
-        //get the token from the config
-        $token = $this->getConfig('token');
-
         // get the tag used for the links
         $tag = $this->getConfig('pinboard_tag', 'lb');
         
         $bookmark = array();
         
         try {
-			$pinboard = new PinboardAPI(null, $token);
-		
-			$bookmark = $pinboard->get($url, $tag);
+			$bookmark = $this->pinboard->get($url, $tag);
 		} catch (PinboardException_ConnectionError $ce) {
 			// just ignore this
 		} catch (PinboardException $e) {
 			\Log::error($e->getMessage());
-		}        
+		}
 
         return $bookmark;
     }
@@ -139,26 +143,7 @@ class Pinboard extends Addon
         // get the pinboard tag used for the links
         $pinboard_tag = $this->getConfig('pinboard_tag', 'lb');
         
-        // do they have my Twitter Add-on installed?
-        $twitterAddon = null;
-        
-        try {
-        	$twitterAddon = $this->api('twitter');
-        } catch (ApiNotFoundException $e) {}
-        
         foreach ($bookmarks as $bookmark) {
-			// if the twitter_embed add-on is installed and the bookmark is a twitter link
-			if ($twitterAddon && strpos($bookmark->url, "https://twitter.com") === 0) {
-				// get the id
-				$url_array = explode('/', $bookmark->url);
-				$id = $url_array[count($url_array)-1];
-		
-				$tweet = $twitterAddon->getTweet($id);
-				
-				// add the tweet contents to the description as a quote
-				$bookmark->description = '> '.$tweet['text'].PHP_EOL.PHP_EOL.$bookmark->description;
-			}
-			
     		$this->writeEntry($bookmark->title,
     						  $bookmark->url,
     						  $bookmark->description,
@@ -172,43 +157,37 @@ class Pinboard extends Addon
 		try {
 			// update the search index
 			Search::update();
-		} catch (Exception $e) {
+            Cache::clear();
+            Please::call('clear:static');
+        } catch (\Exception $e) {
 			Log::error($e->getMessage());
 		}
     }
-    
+
     private function getTaxonomies($tags) {
-    	$link_taxonomies = array($this->getConfig('link_term'));
-    	$tag_taxonomies = null;
-    	$not_tags = $this->getConfig('not_tags');
+    	$category_terms = array(Term::find($this->getConfig('category_term'))->slug());
+    	$tag_terms = null;
+    	$category_tags = $this->getConfig('category_tags');
     	
     	foreach ($tags as $tag) {
-    		if (in_array($tag, $not_tags)) {
-    			$link_taxonomies[] = $tag;
+    		if (in_array($tag, $category_tags)) {
+                $category_terms[] = $tag;
     		} else {
-    			$tag_taxonomies[] = $tag;
+    			$tag_terms[] = $tag;
     		}
     	}
     	
-    	return array($this->getConfig('link_taxonomy') => $link_taxonomies,
-    				 $this->getConfig('tag_taxonomy') => $tag_taxonomies);
+    	return array($this->getConfig('category_taxonomy') => $category_terms,
+    				 $this->getConfig('tag_taxonomy') => $tag_terms);
     }
     
     private function getOrderPrefix($collection) {
         //get the collection so we can figure out the order
-        $order_type = Collection::whereHandle($collection)->order();
-        
-        if ($order_type == 'date') {
-			$prefix = Carbon::now()->format('Y-m-d-Hi');
-		} else {
-			$prefix = Entry::whereCollection($collection)->count() + 1;
-		}
-		
-		return $prefix;	
+    	return (Collection::whereHandle($collection)->order() == 'date') ? Carbon::now()->format('Y-m-d-Hi') : Entry::whereCollection($collection)->count() + 1;
     }
     
     private function getTermIds($taxonomy, $slugs) {
-		$ids = array_map(function($slug) use ($taxonomy) {
+		return array_map(function($slug) use ($taxonomy) {
 			$term = Term::whereSlug($slug, $taxonomy);
 			
 			if (!$term) {
@@ -217,19 +196,5 @@ class Pinboard extends Addon
 
 			return $term->id();
 		}, $slugs);
-		
-		return $ids;
     }
-
-    private function createTerm($taxonomy, $slug) {
-    	$tag = Term::create($slug)
-    			->taxonomy($taxonomy)
-    			->with(['title' => Str::title($slug), 'id' => Helper::makeUuid()])
-    			->get();
-    	
-    	$tag->save();
-
-    	return $tag;
-    }
-    
 }
