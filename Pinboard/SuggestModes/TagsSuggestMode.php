@@ -6,15 +6,10 @@ use PinboardException;
 use PinboardException_ConnectionError;
 use PinboardException_InvalidResponse;
 
-use Statamic\Extend\Extensible;
 use Statamic\Addons\Suggest\Modes\AbstractMode;
 
-class TagsSuggestMode extends AbstractMode
-{
-    use Extensible;
-
-    public function suggestions()
-    {
+class TagsSuggestMode extends AbstractMode {
+    public function suggestions() {
         return $this->getTags()->map(function ($tag, $ignored) {
             return ['value' => $tag, 'text' => $tag];
         });
@@ -23,10 +18,11 @@ class TagsSuggestMode extends AbstractMode
     /**
      * @return \Illuminate\Support\Collection
      */
-    public function getTags()
-    {
+    public function getTags() {
         $tags = array();
-        $pinboard = new PinboardAPI(null, $this->getConfig('token'));
+
+        /** @var PinboardAPI $pinboard */
+        $pinboard = app(PinboardAPI::class);
 
         try {
             $tags = $pinboard->get_tags();
