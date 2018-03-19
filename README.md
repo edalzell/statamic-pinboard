@@ -1,6 +1,3 @@
-Pinboard
-=================
-
 A Statamic V2 add-on for [Pinboard](https://pinboard.in) that creates entries from specific, public bookmarks from your Pinboard account.
 
 ## Installing
