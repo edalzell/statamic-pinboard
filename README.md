@@ -16,6 +16,6 @@ If you want to manually pull older bookmarks:
 
 Bookmarks are added with current date/time **not** the bookmark time.
 
-## LICENSE
+## License
 
 [MIT License](http://emd.mit-license.org)
