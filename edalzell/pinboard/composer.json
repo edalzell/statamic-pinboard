@@ -1,0 +1,32 @@
+{
+    "name": "edalzell/pinboard",
+    "type": "statamic-addon",
+    "autoload": {
+        "psr-4": {
+            "Edalzell\\Pinboard\\": "src"
+        }
+    },
+    "require": {
+        "kijin/pinboard-api": ">=0.3.0"
+    },
+    "authors": [
+        {
+            "name": "Erin Dalzell"
+        }
+    ],
+    "support": {
+        "email": "erin@silentzconsulting.com"
+    },
+    "extra": {
+        "statamic": {
+            "name": "Pinboard",
+            "description": "Periodically polls your Pinboard account and creates link entries",
+            "version": "2.0"
+        },
+        "laravel": {
+            "providers": [
+                "Edalzell\\Pinboard\\ServiceProvider"
+            ]
+        }
+    }
+}

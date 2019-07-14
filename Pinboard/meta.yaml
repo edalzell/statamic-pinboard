@@ -1,7 +1,0 @@
-name: Pinboard
-version: 1.3
-description: >
-  Periodically polls your Pinboard account and creates link entries
-url: https://github.com/edalzell
-developer: Erin Dalzell
-developer_url: https://github.com/edalzell

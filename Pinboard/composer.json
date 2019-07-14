@@ -1,6 +1,0 @@
-{
-    "name": "edalzell/pinboard",
-    "require": {
-        "kijin/pinboard-api": ">=0.3.0"
-    }
-}
