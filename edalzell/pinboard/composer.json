@@ -3,7 +3,8 @@
     "type": "statamic-addon",
     "autoload": {
         "psr-4": {
-            "Edalzell\\Pinboard\\": "src"
+            "Edalzell\\Pinboard\\": "src",
+            "Edalzell\\Pinboard\\Test\\": "tests"
         }
     },
     "require": {
@@ -21,7 +22,7 @@
         "statamic": {
             "name": "Pinboard",
             "description": "Periodically polls your Pinboard account and creates link entries",
-            "version": "2.0"
+            "version": "2.0.1"
         },
         "laravel": {
             "providers": [

@@ -14,7 +14,7 @@ class PinboardGateway implements BookmarkGateway
         $this->api = new PinboardAPI(null, config('pinboard.token'));
     }
 
-    public function recent($from)
+    public function recent($from = null)
     {
         return $this->api->get_all(null, null, config('pinboard.pinboard_tag', 'lb'), $from);
     }
