@@ -2,13 +2,10 @@
 
 namespace Edalzell\Pinboard;
 
-use Edalzell\Pinboard\Pinboard;
-use Edalzell\Pinboard\BookmarkGateway;
-use Edalzell\Pinboard\PinboardGateway;
 use Illuminate\Console\Scheduling\Schedule;
-use Statamic\Extend\ServiceProvider as BaseProvider;
+use Statamic\Providers\AddonServiceProvider;
 
-class ServiceProvider extends BaseProvider
+class ServiceProvider extends AddonServiceProvider
 {
     public function register()
     {
@@ -22,7 +19,7 @@ class ServiceProvider extends BaseProvider
         parent::boot();
 
         $this->publishes([
-            __DIR__ . '/../config.php' => config_path('pinboard.php'),
+            __DIR__.'/../config.php' => config_path('pinboard.php'),
         ]);
 
         $this->app->booted(function () {
