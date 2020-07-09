@@ -35,7 +35,6 @@
         "statamic": {
             "name": "Pinboard",
             "description": "Periodically polls your Pinboard account and creates link entries",
-            "version": "2.0.1"
         },
         "laravel": {
             "providers": [
