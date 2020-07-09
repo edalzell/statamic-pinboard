@@ -2,12 +2,11 @@
 
 namespace Edalzell\Pinboard;
 
-use Statamic\API\Arr;
 use Illuminate\Support\Facades\Cache;
+use Statamic\Support\Arr;
 
 class FakePinboardGateway implements BookmarkGateway
 {
-
     public function add($bookmark)
     {
         $this->bookmarks[] = $bookmark;

@@ -1,19 +1,17 @@
 <?php
 
-use Tests\TestCase;
-use Statamic\API\Entry;
 use Carbon\CarbonImmutable;
-use Statamic\API\Collection;
 use Edalzell\Pinboard\Bookmark;
-use Edalzell\Pinboard\Pinboard;
 use Edalzell\Pinboard\BookmarkGateway;
-use Tests\PreventSavingStacheItemsToDisk;
 use Edalzell\Pinboard\FakePinboardGateway;
+use Edalzell\Pinboard\Pinboard;
+use Illuminate\Support\Facades\Cache;
+use Orchestra\Testbench\TestCase;
+use Statamic\Facades\Collection;
+use Statamic\Facades\Entry;
 
 class PinboardTest extends TestCase
 {
-    use PreventSavingStacheItemsToDisk;
-
     /** @var Pinboard */
     private $pinboard;
 
@@ -61,12 +59,11 @@ class PinboardTest extends TestCase
             'text' => $description,
         ];
 
-        Collection::create('blog')->save();
+        Collection::make('blog')->save();
 
         $this->gateway->add($bookmark);
         $this->pinboard->write($this->gateway->bookmarks(), 'blog');
 
-        /** @var \Statamic\API\Entry */
         $entry = Entry::findBySlug('this-is-a-title', 'blog');
         $content_block = $entry->get('content_block');
 
@@ -81,9 +78,9 @@ class PinboardTest extends TestCase
     {
         for ($x = 0; $x < 5; $x++) {
             $bookmark = new Bookmark(
-                'http://url.com/bookmark' . $x,
-                'Title ' . $x,
-                'Description ' . $x,
+                'http://url.com/bookmark'.$x,
+                'Title '.$x,
+                'Description '.$x,
                 now()->subSeconds($x + 1)
             );
             $this->gateway->add($bookmark);
@@ -102,9 +99,9 @@ class PinboardTest extends TestCase
 
         // the right bookmarks?
         for ($x = 0; $x < 3; $x++) {
-            $this->assertEquals('http://url.com/bookmark' . $x, $bookmarks[$x]->url);
-            $this->assertEquals('Title ' . $x, $bookmarks[$x]->title);
-            $this->assertEquals('Description ' . $x, $bookmarks[$x]->description);
+            $this->assertEquals('http://url.com/bookmark'.$x, $bookmarks[$x]->url);
+            $this->assertEquals('Title '.$x, $bookmarks[$x]->title);
+            $this->assertEquals('Description '.$x, $bookmarks[$x]->description);
             $this->assertGreaterThanOrEqual($from, $bookmarks[$x]->timestamp);
         }
     }
@@ -115,9 +112,9 @@ class PinboardTest extends TestCase
         $now = CarbonImmutable::now();
         for ($x = 0; $x < 5; $x++) {
             $bookmark = new Bookmark(
-                'http://url.com/bookmark' . $x,
-                'Title ' . $x,
-                'Description ' . $x,
+                'http://url.com/bookmark'.$x,
+                'Title '.$x,
+                'Description '.$x,
                 $now->subSeconds($x + 1)
             );
             $this->gateway->add($bookmark);
@@ -131,11 +128,10 @@ class PinboardTest extends TestCase
         $this->assertCount(3, $bookmarks);
 
         for ($x = 0; $x < 3; $x++) {
-            $this->assertEquals('http://url.com/bookmark' . $x, $bookmarks[$x]->url);
-            $this->assertEquals('Title ' . $x, $bookmarks[$x]->title);
-            $this->assertEquals('Description ' . $x, $bookmarks[$x]->description);
+            $this->assertEquals('http://url.com/bookmark'.$x, $bookmarks[$x]->url);
+            $this->assertEquals('Title '.$x, $bookmarks[$x]->title);
+            $this->assertEquals('Description '.$x, $bookmarks[$x]->description);
             $this->assertGreaterThanOrEqual($from, $bookmarks[$x]->timestamp);
         }
     }
-
 }

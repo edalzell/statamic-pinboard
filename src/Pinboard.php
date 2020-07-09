@@ -2,15 +2,15 @@
 
 namespace Edalzell\Pinboard;
 
-use Log;
-use Statamic\API\Str;
-use Statamic\API\Site;
-use Statamic\API\Entry;
-use Statamic\API\Search;
 use Illuminate\Support\Arr;
-use Statamic\API\Collection;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Artisan as Please;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Statamic\Entries\Entry;
+use Statamic\Facades\Collection;
+use Statamic\Facades\Search;
+use Statamic\Facades\Site;
+use Statamic\Support\Str;
 
 class Pinboard
 {
