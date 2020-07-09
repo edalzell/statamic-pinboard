@@ -1,6 +1,7 @@
 {
     "name": "edalzell/pinboard",
     "type": "statamic-addon",
+    "license": "MIT",
     "autoload": {
         "psr-4": {
             "Edalzell\\Pinboard\\": "src",
