@@ -34,7 +34,7 @@
     "extra": {
         "statamic": {
             "name": "Pinboard",
-            "description": "Periodically polls your Pinboard account and creates link entries",
+            "description": "Periodically polls your Pinboard account and creates link entries"
         },
         "laravel": {
             "providers": [
