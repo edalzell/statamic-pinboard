@@ -7,8 +7,6 @@ use Statamic\Providers\AddonServiceProvider;
 
 class ServiceProvider extends AddonServiceProvider
 {
-    protected $publishAfterInstall = false;
-
     public function register()
     {
         $this->app->bind(BookmarkGateway::class, function () {
@@ -19,10 +17,6 @@ class ServiceProvider extends AddonServiceProvider
     public function boot()
     {
         parent::boot();
-
-        $this->publishes([
-            __DIR__.'/../config.php' => config_path('pinboard.php'),
-        ], 'pinboard');
 
         $this->app->booted(function () {
             app(Schedule::class)->call(function () {
